@@ -24,6 +24,12 @@ export default function ReactMovable() {
 
   const [days, setDays] = useState(getInitialDays());
   const [taskCounter, setTaskCounter] = useState(getInitialTaskCounter());
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState({
+    dayIndex: null,
+    taskIndex: null,
+    newValue: "",
+  });
 
   useEffect(() => {
     localStorage.setItem(localStorageKey, JSON.stringify(days));
@@ -117,6 +123,33 @@ export default function ReactMovable() {
     );
   };
 
+  const openEditModal = (dayIndex, taskIndex, currentValue) => {
+    setTaskToEdit({ dayIndex, taskIndex, newValue: currentValue });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditTaskChange = (event) => {
+    setTaskToEdit((prev) => ({ ...prev, newValue: event.target.value }));
+  };
+
+  const saveEditedTask = () => {
+    const { dayIndex, taskIndex, newValue } = taskToEdit;
+    setDays((prevDays) =>
+      prevDays.map((day, index) => {
+        if (index === dayIndex) {
+          return {
+            ...day,
+            tasks: day.tasks.map((task, idx) =>
+              idx === taskIndex ? newValue : task
+            ),
+          };
+        }
+        return day;
+      })
+    );
+    setIsEditModalOpen(false);
+  };
+
   return (
     <section>
       <div className="container px-5 py-10 mx-auto">
@@ -193,12 +226,46 @@ export default function ReactMovable() {
                     >
                       <i className="fas fa-trash"></i>
                     </button>
+                    <button
+                      onClick={() => openEditModal(dayIndex, index, value)}
+                      className="h-10 p-2 text-xs text-center text-white list-none bg-blue-500 cursor-pointer aspect-square"
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
                   </div>
                 )}
               />
             </div>
           ))}
         </div>
+
+        {isEditModalOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+            <div className="p-6 bg-white rounded-md shadow-md">
+              <h3 className="mb-4 text-2xl font-bold">Edit Task</h3>
+              <input
+                type="text"
+                className="w-full p-2 mb-4 border"
+                value={taskToEdit.newValue}
+                onChange={handleEditTaskChange}
+              />
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="p-2 text-xs text-center text-white list-none bg-red-500 cursor-pointer whitespace-nowrap"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEditedTask}
+                  className="p-2 text-xs text-center text-white list-none bg-blue-500 cursor-pointer whitespace-nowrap"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
